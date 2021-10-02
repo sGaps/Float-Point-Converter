@@ -1,10 +1,10 @@
 module Binary.Integer.Base (
-    -- Data types
+    -- * Data types
     StepI(..),
     Sign(..),
     BinInteger(..),
 
-    -- Sign operations:
+    -- * Sign operations
     numToSign,
     signToNum
 ) where
@@ -15,10 +15,9 @@ data StepI a = StepI {
     getDigit :: a   -- ^ digit of the current step.
 } deriving (Show,Eq,Ord)
 
--- | Represents the negative or positive bit of the digit.
+-- | Represents the negative or positive bit of the number.
 data Sign = Negative | Positive deriving( Eq , Ord , Enum , Show , Bounded )
 
--- TODO: Implement Ord manually.
 -- | Represents a binary integer number.
 data BinInteger a = BinInteger {
     getSign   :: Sign,  -- ^ holds de value of the digit.

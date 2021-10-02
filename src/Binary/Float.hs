@@ -1,22 +1,20 @@
 module Binary.Float (
-    -- Data Types
+    -- * Data Types
     Sign(..),
     StepF(..),
     BinFloat(..),
 
-    -- Conversion between data types.
+    -- * Conversion
     fromBinInteger,
+    IntoBinary(..),
 
     ratioToBinary,
     ratioToBinaryWithSteps,
 
-    -- Show utilities
+    -- * Show utilities
     showBinFloatSimple,
     showBinFloatUnixUnderlined,
-    showsBinFloat,
-
-    -- Main Binary Conversion API
-    IntoBinary(..)
+    showsBinFloat
 ) where
 
 import Binary.Float.Base
@@ -27,7 +25,7 @@ import qualified Binary.Integer as I (BinInteger(..),integerToBinaryWithSteps,St
 import Data.List  (findIndices)
 import Data.Ratio (approxRational,Ratio)
 
--- | Converts a BinInteger into a BinFloat
+-- | Converts a 'BinInteger' into a 'BinFloat'.
 fromBinInteger (I.BinInteger s bits) = BinFloat s bits [] [] (Just 0)
 
 -- | Transforms a rational/fracctional number into binary
@@ -109,8 +107,24 @@ type IntegerSteps a   = [I.StepI a]
 
 -- | It defines two methods to convert a number into its binary representation
 class RealFrac a => IntoBinary a where
+    -- | Shared constant used to approximate the values to 'Rational'
+    -- in the function 'floatToBinaryWithSteps'.
     approxEpsilon :: a
-    floatToBinaryWithSteps :: Integral b => Int -> a -> (BinFloat b,IntegerSteps b, FloatSteps Rational b, FloatSteps Rational b)
+
+    -- | Transform a 'RealFrac' value into its Binary represntation.
+    --
+    -- returns 
+    --
+    -- @
+    -- (BinFloat number,
+    --  conversion steps of the integral part ,
+    --  conversion steps of the fractional finite part ,
+    --  conversion steps of the cyclic digits part )
+    -- @
+    floatToBinaryWithSteps :: Integral b 
+                => Int 
+                -> a 
+                -> (BinFloat b,IntegerSteps b, FloatSteps Rational b, FloatSteps Rational b)
     floatToBinaryWithSteps = genericFloatToBinaryWithSteps approxEpsilon
 
     floatToBinary :: Integral b => Int -> a -> BinFloat b

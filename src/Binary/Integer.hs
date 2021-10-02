@@ -1,19 +1,23 @@
 module Binary.Integer (
-    -- Utilities:
+    -- * Utilities
     digits,
+    evaluateBinInteger,
+    rawEncode,
+
+    -- * Conversion
     integerToBinary,
     integerToBinaryWithSteps,
 
-    -- Data types
+    -- * Data types
     Sign(..),
     StepI(..),
     BinInteger(..),
 
-    -- Sign operations:
+    -- * Sign operations
     numToSign,
     signToNum,
 
-    -- Show/String utilities
+    -- * Show/String utilities
     showBinInteger,
     showsBinInteger
 ) where
@@ -22,7 +26,9 @@ import Binary.Integer.Base
 import Binary.Integer.Show
 
 -- | returns the digits of a given number k as a list of Integral numbers, where:
--- * the least significant digit is at the index `0`:
+--
+-- * the least significant digit is at the index `0`.
+--
 -- * the most significant digit is the last element of the list.
 --
 -- > digits number ! 0 = number `mod` 10
@@ -33,17 +39,24 @@ digits k
     | otherwise = let (q,r) = k `quotRem` 10
                   in q `seq` r : digits q
 
+-- | Encode raw a binary-digit list into a Integral type.
+--
+-- the first element of the list is the least significant
+-- digit and the last one is the most significant.
+rawEncode = sum . zipWith (*) exps
+    where exps = iterate (*2) 1
+
 -- | Converts a Binary Integer into its regular form.
-evaluate (BinInteger s ds) = (sign *) . sum . zipWith (*) exps $ ds
+evaluateBinInteger (BinInteger s ds) = (sign *) . sum . zipWith (*) exps $ ds
         where exps = iterate (*10) 1
               sign = signToNum s
 
 
--- TODO: check this value against zero!
--- | Returns the given number in a binary format.
+-- | Returns the given number in its binary format.
 integerToBinary = (fst . integerToBinaryWithSteps)
 
--- | Returns an integer in its binary format with the conversion steps.
+-- | Returns an integral value in its binary format.
+-- with the conversion steps.
 integerToBinaryWithSteps :: Integral a => a -> (BinInteger a, [StepI a])
 integerToBinaryWithSteps k =
     if k == 0

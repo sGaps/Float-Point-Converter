@@ -1,13 +1,13 @@
 module Binary.Float.Show (
-    -- Data type
+    -- * Data types
     TextEffect(..),
 
-    -- show utilities
+    -- * Show/String utilities
     showBinFloatSimple,
     showBinFloatUnixUnderlined,
     showsBinFloat,
 
-    -- Formatting
+    -- * Formatting
     unixUnderLine,
     silentLine,
     barOnLine,

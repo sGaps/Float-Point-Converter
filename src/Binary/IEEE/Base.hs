@@ -6,6 +6,7 @@ module Binary.IEEE.Base (
 
 import Binary.Float.Base
 -- | Formats:
+--
 -- * IEEESingle = float of 32 bits. [sign : 1bit][exponent : 8bits][mantissa : 23 bits]
 --
 -- * IEEEDouble = float of 64 bits. [sign :  bit][exponent :  bits][mantissa :    bits]

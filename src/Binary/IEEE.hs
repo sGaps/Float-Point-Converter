@@ -1,12 +1,16 @@
 module Binary.IEEE (
+    -- * Re-exports
     IEEEFormat(..),
     IEEEFloat(..),
 
+    -- * Conversion
     fromBinFloatWithSteps,
     fromBinFloat,
 
+    -- * Data types
     IntoIEEE(..),
 
+    -- * Show/String utilities
     showIEEE,
     showsIEEE
 ) where
@@ -21,22 +25,18 @@ import qualified Binary.Integer as I (StepI,BinInteger(..),integerToBinaryWithSt
 import Data.List  (findIndex,genericLength)
 import Data.Ratio (Ratio)
 
--- TODO: Remove
-import Debug.Trace
-
-
 type FloatSteps   a b = [F.StepF a b]
 type IntegerSteps a   = [I.StepI a  ]
 
--- | Truncates, it doesn't apply rounding
+-- | Transforms a 'BinFloat' into a 'IEEEFloat' without rounding.
 fromBinFloatWithSteps :: Integral b
                             => IEEEFormat 
                             -> F.BinFloat b
                             -> (IEEEFloat b , IntegerSteps b)
 fromBinFloatWithSteps format (F.BinFloat s is fs cs tr) =
     let (biasedExponent,rawSignificand) =
-            case break (== 1) rawDigits of
-                (zeroes,[]    ) -> (0,rawDigits)
+            case break (== 1) rawDigits of                          -- finds the first '1' and split the digit-list.
+                (zeroes,[]    ) -> (0,rawDigits)                    -- if it has only zeroes. Then the number is zero.
                 (zeroes,rawSig) ->
                     let fracctionalBias = genericLength zeroes      -- move point to the right (2^-something)
                         integerBias     = genericLength is     - 1  -- move point to the left  (2^+something)
@@ -66,12 +66,8 @@ fromBinFloatWithSteps format (F.BinFloat s is fs cs tr) =
                             then []
                             else cycle cs        
 
-          -- number f
           rawDigits       = integerBits <> fraccBits <> cycleBits
           sum0Default x y = maybe 0 id x + maybe 0 id y
-
-          -- TODO: Change for span (== 1)
-          splitAtFirstOne xs = findIndex (==1) xs >>= return . (flip splitAt) xs
 
           exponentValue      = exponentLength  - 1
           exponentBias       = 2^exponentValue - 1
@@ -80,47 +76,76 @@ fromBinFloatWithSteps format (F.BinFloat s is fs cs tr) =
                                     IEEESingle -> (8 ,23) -- significand: 23 bits explicit stored
                                     IEEEDouble -> (11,52) -- significand: 52 bits explicit stored
 
+-- | Works like `fromBinFloatWithSteps` but discards the conversion steps.
 fromBinFloat format = fst . fromBinFloatWithSteps format
 
+-- | Common interface to convert numbers into
+-- 'IEEEFloat' without rounding.
 class F.IntoBinary a => IntoIEEE a where
+    -- | Default IEEE format used to convert a given number into
+    -- 'IEEEFloat'
     defaultCastType      :: a -> IEEEFormat
 
-    floatToIEEEWithSteps :: Integral b => IEEEFormat                -- ^ format to represent the given numer
-                                       -> Int                       -- ^ precision (# of division steps when converting into a binary fractional number)
-                                       -> a                         -- ^ number to convert
-                                       -> (IEEEFloat b,             -- ^ New Representation,
-                                           IntegerSteps b,          --   Steps of the conversion of the integral part of the number
-                                           FloatSteps Rational b,   --   Steps of the conversion of the fractional finite part
-                                           FloatSteps Rational b,   --   Steps of the conversion of the cyclic part
-                                           IntegerSteps b)          --   Steps of the conversion of the exponent
+    -- | Transforms a value into IEEE and returns it with its conversion steps.
+    --
+    -- returns
+    --
+    -- @
+    -- (IEEE number,
+    --  conversion steps of the integral part ,
+    --  conversion steps of the fractional finite part ,
+    --  conversion steps of the cyclic digits part ,
+    --  conversion steps of the integral exponent part )
+    -- @
+    floatToIEEEWithSteps :: Integral b => IEEEFormat                -- ^ format to represent the given number.
+                                       -> Int                       -- ^ BinFloat depth or bit-precision.
+                                       -> a                         -- ^ number to convert.
+                                       -> (IEEEFloat b,
+                                           IntegerSteps b,
+                                           FloatSteps Rational b,
+                                           FloatSteps Rational b,
+                                           IntegerSteps b)
     floatToIEEEWithSteps format prec number = 
         let (bin,isteps,fsteps,csteps) = F.floatToBinaryWithSteps prec number
             (ieee,esteps)              = fromBinFloatWithSteps format bin
         in (ieee,isteps,fsteps,csteps,esteps)
 
-    floatToIEEE :: Integral b => IEEEFormat     -- ^ format to represent the given numer
-                              -> Int            -- ^ precision (# of division steps when converting into a binary fractional number)
-                              -> a              -- ^ number to convert
-                              -> IEEEFloat b    -- ^ New Representation,
+    -- | Transforms a value into a IEEE number.
+    --
+    -- See also: 'floatToIEEEWithSteps'.
+    floatToIEEE :: Integral b => IEEEFormat     -- ^ format to represent the given number.
+                              -> Int            -- ^ BinFloat depth or bit-precision.
+                              -> a              -- ^ number to convert.
+                              -> IEEEFloat b
     floatToIEEE format prec number =
         let (ieee,_,_,_,_) = floatToIEEEWithSteps format prec number
         in ieee
 
+    -- | Transforms a value into a IEEE number and returns it with its conversion steps.
+    --
+    -- __NOTE:__ this uses the format returned by 'defaultCastType'
+    --
+    -- See also: 'floatToIEEEWithSteps'.
     floatToDefaultIEEEWithSteps :: Integral b 
-                                    => Int                      -- ^ precision (# of division steps when converting into a binary fractional number)
-                                    -> a                        -- ^ number to convert
-                                    -> (IEEEFloat b,            -- ^ New Representation,
-                                        IntegerSteps b,         --   Steps of the conversion of the integral part of the number
-                                        FloatSteps Rational b,    --   Steps of the conversion of the fractional finite part
-                                        FloatSteps Rational b,    --   Steps of the conversion of the cyclic part
-                                        IntegerSteps b)         --   Steps of the conversion of the exponent
+                                    => Int                      -- ^ BinFloat depth or bit-precision.
+                                    -> a                        -- ^ number to convert.
+                                    -> (IEEEFloat b,
+                                        IntegerSteps b,
+                                        FloatSteps Rational b,
+                                        FloatSteps Rational b,
+                                        IntegerSteps b)
     floatToDefaultIEEEWithSteps prec number =
         floatToIEEEWithSteps defaultCast prec number
             where defaultCast = defaultCastType number
 
-    floatToDefaultIEEE :: Integral b => Int         -- ^ precision (# of division steps when converting into a binary fractional number)
-                                     -> a           -- ^ number to convert
-                                     -> IEEEFloat b -- ^ New Representation,
+    -- | Transforms a value into IEEE
+    --
+    -- __NOTE:__ this uses the format returned by 'defaultCastType'
+    --
+    -- See also: 'floatToIEEEWithSteps'.
+    floatToDefaultIEEE :: Integral b => Int         -- ^ BinFloat depth or bit-precision.
+                                     -> a           -- ^ number to convert.
+                                     -> IEEEFloat b
     floatToDefaultIEEE prec number =
         floatToIEEE defaultCast prec number
             where defaultCast = defaultCastType number

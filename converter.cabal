@@ -18,7 +18,7 @@ build-type:          Simple
 extra-source-files:  CHANGELOG.md
 
 library
-  exposed-modules:     Binary ,
+  exposed-modules:     Binary , Binary.Show
                        Binary.Integer , Binary.Integer.Base ,
                        Binary.Float , Binary.Float.Base ,
                        Binary.IEEE , Binary.IEEE.Base

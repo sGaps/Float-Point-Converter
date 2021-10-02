@@ -1,60 +1,65 @@
 module Binary (
-    -- Integers
+    -- *Others
+    digits,
+
+    -----------------------------------
+
+    -- * Integers
     BinInteger,
     StepI,
 
-    -- Integers (util)
-    digits,
 
-    -- Integers (show)
-    showBinInteger,
-    showsBinInteger,
-
-    --------------------------
-    -- conversion [Integer] --
-    --------------------------
     integerToBinary,
     integerToBinaryWithSteps,
 
+    -----------------------------------
 
-    -- Fracctional
+    -- * Fracctional/Float
     BinFloat,
     StepF,
 
-    -- Show utilities
-    showBinFloatSimple,
-    showBinFloatUnixUnderlined,
-    showsBinFloat,
-
-    -----------------------------
-    -- conversion [Fractional] --
-    -----------------------------
     -- Conversion between data types.
     fromBinInteger,
     -- Conversion class
     IntoBinary(..),
 
-
-
-    -- IEEE numbers
+    -----------------------------------
+    
+    -- * IEEE Float
     IEEEFormat(..),
     IEEEFloat,
 
-
-    showIEEE,
-    showsIEEE,
-
-    -----------------------
-    -- conversion [IEEE] --
-    -----------------------
     -- Conversion between data types.
     fromBinFloatWithSteps,
     fromBinFloat,
     -- Conversion class
-    IntoIEEE(..)
+    IntoIEEE(..),
+
+    -----------------------------------
+
+    -- * Show/String utilities
+
+    -- Integers (show)
+    showBinInteger,
+    showsBinInteger,
+
+    -- Float/Fracctional (show)
+    showBinFloatSimple,
+    showBinFloatUnixUnderlined,
+    showsBinFloat,
+
+    -- IEEE (show)
+    showIEEE,
+    showsIEEE,
+
+    -- Steps
+    showIntegerSteps,
+    showFloatSteps,
+    showNormalizedFloatSteps
 ) where
 
 import Binary.Integer
 import Binary.Float
 import Binary.IEEE
-
+import Binary.Show
+    

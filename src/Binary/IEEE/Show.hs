@@ -7,27 +7,34 @@ import Binary.IEEE.Base
 
 showIEEE ieee = showsIEEE ieee ""
 
-showsIEEE (IEEEFloat s es ms fmt) =
-    showChar '(' .
-    shows    fmt .
-    showChar ' ' .
+showsIEEE :: Show a => IEEEFloat a -> ShowS
+showsIEEE =
+    showsGeneralIEEE sign exp sgnf
+    where sign s = paren "[" ""  s
+          exp  s = paren "|" "|" s
+          sgnf s = paren ""  "] <without rounding>" s
+          paren op cl sh = showString op .
+                           sh            .
+                           showString cl
+
+-- | each (ShowS -> ShowS) must add parenthesis to its argument
+showsGeneralIEEE sParen eParen mParen (IEEEFloat s es ms fmt) =
+    prelude      .
     sign         .
     exponent     .
     significand  .
-    showChar ')'
-
+    end
     where ignore   = showString ""
           bitSign  = if (s == Negative) then [1] else [0]
+          prelude  = showChar '(' . shows fmt . showChar ' '
+          end      = showChar ')'
 
-          sign        = bitField "sign"        . fmap shows $ bitSign
-          exponent    = bitField "exponent"    . fmap shows $ es
-          significand = bitField "significand" . fmap shows $ ms
+          sign        = bitField sParen . fmap shows $ bitSign
+          exponent    = bitField eParen . fmap shows $ es
+          significand = bitField mParen . fmap shows $ ms
 
-          combine xs       = foldr (.) ignore xs
-          bitField name xs = let body   = combine xs
-                                in showString "["   .
-                                   showString name  .
-                                   showString ": "  .
-                                   body             .
-                                   showString " :]"
-        
+          combine xs      = foldr (.) ignore xs
+          bitField par xs = let body = combine xs
+                             in par body
+                                
+
