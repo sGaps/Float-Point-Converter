@@ -13,16 +13,16 @@ import Binary.IEEE    (IEEEFloat(..))
 import Data.Ratio
 
 -- Sample transformation functions:
-makeSample   k = take k . filter (/= 0) . digits $ k
-sumSample      = sum . makeSample
-concatSample   = foldr sum10 0 . makeSample
+makeSample   k = take k . filter (/= 0) . digits
+sumSample    k = sum . makeSample k
+concatSample k = foldr sum10 0 . makeSample k
             where x `sum10` y = let y' = 10 * y         -- <| it's likely to:
                                 in y' `seq` (x + y')    -- (+) <$> (*10)
 
 -- Sample data:
 origin = 59903
-sample = makeSample origin
-d      = sumSample origin
+sample = makeSample 4 origin
+d      = sumSample  4 origin
 x1     = 1 % (fromIntegral d)
 
 e      = concatSample origin
@@ -51,7 +51,7 @@ main = do
     putStrLn $ "Binary Number: " ++ showBinFloatUnixUnderlined binFloat
     putStrLn $ "IEEE Number:   " ++ showIEEE ieee
     putStrLn $ " > sign:                 " ++ show (getSign ieee)
-    putStrLn $ " > biased exponent:      " ++ show (rawEncode . getExponent $ ieee)
+    putStrLn $ " > biased exponent:      " ++ show (rawEncode . reverse . getExponent $ ieee)
     putStrLn $ " > decoded significand : " ++ show (rawEncode . reverse . getSignificand $ ieee)
     putStrLn $ ""
 
