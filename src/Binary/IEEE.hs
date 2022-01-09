@@ -28,53 +28,61 @@ import Data.Ratio (Ratio)
 type FloatSteps   a b = [F.StepF a b]
 type IntegerSteps a   = [I.StepI a  ]
 
+
+applyBias format intbits fracbits cyclbits =
+    let (zeroes, startsWithOne) = break (== 1) significandDigits
+        fracctionalBias = genericLength zeroes      -- move floating point to the right (2^-something)
+        integerBias     = genericLength intbits - 1 -- move floating point to the left  (2^+something)
+        biasedExponent  = if null startsWithOne     -- If doesn't have any one, the exponent must be zero.
+                           then 0
+                           else exponentBias + integerBias - fracctionalBias
+    in (biasedExponent , startsWithOne)
+    where bitsUsed          = exponentSize format
+          effectiveBits     = bitsUsed        - 1 -- The domain of the bit field is sliced at the middle
+          exponentBias      = 2^effectiveBits - 1 -- so, we have to use the fixed bias.
+          significandDigits = intbits <> fracbits <> cyclbits
+
+-- TODO: Change this to accept an integer instead of a format, so we can apply rounding later.
+fixedSignificand format significand =
+        take significandLength .
+        tail .                              -- The IEEE's floating point format implicitly saves the first
+        zipWith (+) [0,0..] $               -- digit 1 when the exponent is not zero, so we can ignore it.
+                    (significand <> [0,0..])
+    where significandLength = significandSize format
+    
+
 -- | Transforms a 'BinFloat' into a 'IEEEFloat' without rounding.
 fromBinFloatWithSteps :: Integral b
                             => IEEEFormat 
                             -> F.BinFloat b
                             -> (IEEEFloat b , IntegerSteps b)
-fromBinFloatWithSteps format (F.BinFloat s is fs cs tr) =
-    let (biasedExponent,rawSignificand) =
-            case break (== 1) rawDigits of                          -- finds the first '1' and split the digit-list.
-                (zeroes,[]    ) -> (0,rawDigits)                    -- if it has only zeroes. Then the number is zero.
-                (zeroes,rawSig) ->
-                    let fracctionalBias = genericLength zeroes      -- move point to the right (2^-something)
-                        integerBias     = genericLength is     - 1  -- move point to the left  (2^+something)
-                        exponent        = exponentBias + integerBias - fracctionalBias
-                    in ( exponent , rawSig )
-        (binRawExponent,expSteps) = I.integerToBinaryWithSteps biasedExponent
-        binRawExponentDigits      = I.getDigits binRawExponent
+fromBinFloatWithSteps format
+                      (F.BinFloat sign
+                                  intBits   -- form: [b0, ... bn]
+                                  fraccBits
+                                  cycleBits
+                                  _) =
+    let (biasedExponent, biasedSignificand) = applyBias format
+                                                        integerBits
+                                                        fraccBits
+                                                        cycleBits
 
-        exponentPadding           = take (exponentLength - length binRawExponentDigits) onlyZeroes
-        binExponent               = exponentPadding <> (reverse binRawExponentDigits)
+        (binIntExponent,expSteps) = I.integerToBinaryWithSteps biasedExponent
+        exponentDigits            = (reverse . I.getDigits) binIntExponent
 
-        significand = take significandLength .
-                      tail .    -- discard the first one! it doesn't matter if the number has only zeroes.
-                      zipWithMaybe sum0Default onlyZeroes $
-                      rawSignificand <> trueCycle
+        exponentPadding = take (exponentLength - length exponentDigits) [0,0..]
+        binExponent     = exponentPadding <> exponentDigits
 
-        dummyEXP      = fromIntegral biasedExponent :: (Integral z, Show z) => z  -- TODO: DELETE
-    in (IEEEFloat s binExponent significand format,
+        significand = fixedSignificand format (biasedSignificand <> tailCycle)
+    in (IEEEFloat sign binExponent significand format,
         expSteps)
                       
-    where signLength  = 1                   -- sign always uses one bit.
-          integerBits = reverse is          -- integer bits in the right order.
-          fraccBits   = fs                  -- finite fractional bits.
-          cycleBits   = cs                  -- cyclic & bounded fractional bits (comes after fraccBits).
-          onlyZeroes  = [0,0..]             -- a bunch of zeroes
-          trueCycle   = if null cycleBits   -- infinite/finite cyclic bits.
+    where integerBits     = reverse intBits -- integer bits in the right order. [bn, ... b0]
+          exponentLength  = exponentSize format
+          tailCycle   = if null cycleBits   -- infinite/finite cyclic bits.
                             then []
-                            else cycle cs        
+                            else cycle cycleBits
 
-          rawDigits       = integerBits <> fraccBits <> cycleBits
-          sum0Default x y = maybe 0 id x + maybe 0 id y
-
-          exponentValue      = exponentLength  - 1
-          exponentBias       = 2^exponentValue - 1
-          (exponentLength,
-           significandLength) = case format of
-                                    IEEESingle -> (8 ,23) -- significand: 23 bits explicit stored
-                                    IEEEDouble -> (11,52) -- significand: 52 bits explicit stored
 
 -- | Works like `fromBinFloatWithSteps` but discards the conversion steps.
 fromBinFloat format = fst . fromBinFloatWithSteps format

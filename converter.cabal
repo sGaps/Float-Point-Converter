@@ -25,7 +25,7 @@ library
   other-modules:       Common ,
                        Binary.Integer.Show , Binary.Float.Show , Binary.IEEE.Show
   -- other-extensions:
-  build-depends:       base >=4.14 && <4.15
+  build-depends:       base >=4.14
   hs-source-dirs:      src
   default-language:    Haskell2010
 
@@ -33,7 +33,7 @@ executable converter
   main-is:             Main.hs
   -- other-modules:
   -- other-extensions:
-  build-depends:       base >=4.14 && <4.15, converter
+  build-depends:       base >=4.14, converter
   hs-source-dirs:      src-exe
   default-language:    Haskell2010
 
@@ -42,19 +42,19 @@ test-suite test-integer
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             IntegerTest.hs
-  build-depends:       base >=4.14 && <4.15, converter
+  build-depends:       base >=4.14, converter
 
 test-suite test-float
   default-language:    Haskell2010
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             FloatTest.hs
-  build-depends:       base >=4.14 && <4.15, converter
+  build-depends:       base >=4.14, converter
 
 test-suite test-ieee
   default-language:    Haskell2010
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             IEEETest.hs
-  build-depends:       base >=4.14 && <4.15, converter
+  build-depends:       base >=4.14, converter
 

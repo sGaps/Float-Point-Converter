@@ -8,25 +8,31 @@ import Binary (digits,
                floatToIEEEWithSteps,
                showIntegerSteps,
                showNormalizedFloatSteps)
-import Binary.Integer (rawEncode)
+import Binary.Integer (fromDigitList)
 import Binary.IEEE    (IEEEFloat(..))
 import Data.Ratio
 
 -- Sample transformation functions:
+makeSample   :: Integral a => Int -> a -> [a]
 makeSample   k = take k . filter (/= 0) . digits
+
+sumSample    :: Integral a => Int -> a -> a
 sumSample    k = sum . makeSample k
+
+concatSample :: Integral a => Int -> a -> a
 concatSample k = foldr sum10 0 . makeSample k
             where x `sum10` y = let y' = 10 * y         -- <| it's likely to:
                                 in y' `seq` (x + y')    -- (+) <$> (*10)
 
 -- Sample data:
+origin :: Integer
 origin = 59903
 sample = makeSample 4 origin
 d      = sumSample  4 origin
 x1     = 1 % (fromIntegral d)
 
-e      = concatSample origin
-x2     = toRational e + x1
+e      = concatSample 4 origin
+x2     = fromIntegral e + x1
 
 main :: IO ()
 main = do
@@ -51,8 +57,8 @@ main = do
     putStrLn $ "Binary Number: " ++ showBinFloatUnixUnderlined binFloat
     putStrLn $ "IEEE Number:   " ++ showIEEE ieee
     putStrLn $ " > sign:                 " ++ show (getSign ieee)
-    putStrLn $ " > biased exponent:      " ++ show (rawEncode . reverse . getExponent $ ieee)
-    putStrLn $ " > decoded significand : " ++ show (rawEncode . reverse . getSignificand $ ieee)
+    putStrLn $ " > biased exponent:      " ++ show (fromDigitList . reverse . getExponent $ ieee)
+    putStrLn $ " > decoded significand : " ++ show (fromDigitList . reverse . getSignificand $ ieee)
     putStrLn $ ""
 
     putStrLn $ "-- Procedure --"
@@ -60,15 +66,11 @@ main = do
     putStrLn $ showIntegerSteps indent isteps
     putStrLn $ ""
 
-    putStrLn $ "Finite Fracctional Digits to Binary."
+    putStrLn $ "Finite Fractional Digits to Binary."
     putStrLn $ showNormalizedFloatSteps 2 indent fsteps
     putStrLn $ ""
 
-    putStrLn $ "Cyclic Fracctional Digits to Binary."
-    putStrLn $ showNormalizedFloatSteps 2 indent csteps
-    putStrLn $ ""
-
-    putStrLn $ "Cyclic Fracctional Digits to Binary."
+    putStrLn $ "Cyclic Fractional Digits to Binary."
     putStrLn $ showNormalizedFloatSteps 2 indent csteps
     putStrLn $ ""
 

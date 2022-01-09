@@ -5,7 +5,9 @@ module Binary.Integer.Show (
 
 import Binary.Integer.Base
 
--- | Convert a BinInteger into a String
+-- | Converts a BinInteger into a String
+--
+-- See also: 'showsBinInteger'
 showBinInteger :: Show a => BinInteger a -> String
 showBinInteger b = showsBinInteger b ""
 

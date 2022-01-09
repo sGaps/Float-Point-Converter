@@ -2,7 +2,7 @@ module Binary.Integer (
     -- * Utilities
     digits,
     evaluateBinInteger,
-    rawEncode,
+    fromDigitList,
 
     -- * Conversion
     integerToBinary,
@@ -41,32 +41,37 @@ digits k
 
 -- | Encode raw a binary-digit list into a Integral type.
 --
--- the first element of the list is the least significant
+-- The first element of the list is the least significant
 -- digit and the last one is the most significant.
-rawEncode = sum . zipWith (*) exps
+fromDigitList :: Num a => [a] -> a
+fromDigitList = sum . zipWith (*) exps
     where exps = iterate (*2) 1
 
 -- | Converts a Binary Integer into its regular form.
+evaluateBinInteger :: Num a => BinInteger a -> a
 evaluateBinInteger (BinInteger s ds) = (sign *) . sum . zipWith (*) exps $ ds
         where exps = iterate (*10) 1
               sign = signToNum s
 
 
 -- | Returns the given number in its binary format.
+integerToBinary :: Integral a => a -> BinInteger a
 integerToBinary = (fst . integerToBinaryWithSteps)
 
--- | Returns an integral value in its binary format.
--- with the conversion steps.
+-- | Represents a given Integral number in the binary
+-- numerical system, and also returns the steps that
+-- were made in the conversion process.
 integerToBinaryWithSteps :: Integral a => a -> (BinInteger a, [StepI a])
 integerToBinaryWithSteps k =
     if k == 0
-        then zero
+        then (zero, trivial)
         else let sign  = numToSign k
-                 bin   = tail . iterate update $ (abs k,0)
+                 bin   = tail . iterate division $ (abs k,0)
                  steps = takeWhile notZero bin
                  bits  = snd <$> steps
-             in (BinInteger sign bits,uncurry StepI <$> steps)
-    where notZero = (/= (0,0))
-          update  = ((`quotRem` 2) . fst)
-          zero    = (BinInteger Positive [0], [StepI 0 0])
+             in (BinInteger sign bits, uncurry StepI <$> steps)
+    where notZero  = (/= (0,0))
+          division = ((`quotRem` 2) . fst)
+          trivial  = [StepI 0 0]
+          zero     = BinInteger Positive [0]
 
